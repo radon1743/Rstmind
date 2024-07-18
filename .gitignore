@@ -1,1 +1,7 @@
 /target
+/built.txt
+/test.ico
+/.vscode
+/src/custom_theme.txt
+/src/todos.rs
+.gitignore

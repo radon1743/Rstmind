@@ -1,26 +1,56 @@
-use iced::{executor, Length};
-use iced::{Element, Application, Settings,Theme,Command};
-use iced::widget::{Button, Container, Row,Column, Text,Space};
-use chrono::{Datelike, Local, NaiveDate};
 
-fn main() -> iced::Result {
-    CalendarApp::run(Settings::default())
-}
+//use iced::theme::{Custom, Palette};
+use iced::{executor, Color, Point};
+use iced::{Element, Application,window, Settings,Theme,Command,Size};
+use iced::widget::{Button, Container, Row,Column, Text};
+use chrono::{Datelike, Local, NaiveDate};
+use iced::window::{Position::Specific,Level,settings::PlatformSpecific};
+
 
 #[derive(Default)]
 struct CalendarApp {
     selected_date: NaiveDate,
     //buttons: Vec<button::State>,
     today: NaiveDate,
-    
     }
+
 
 #[derive(Debug, Clone)]
 enum Message {
     PrevMonth,
     NextMonth,
-    DateSelected(NaiveDate),
+    DateSelected(NaiveDate), 
+}
+
+
+
+fn main() -> iced::Result {
+    let height = 250.0;
+    let width = 400.0;
+    let x =960.0;
+    let y = 480.0;
     
+    
+    let settings = Settings {
+        window: window::Settings {
+            size: (Size::new(width,height)),
+            exit_on_close_request: false,
+            transparent: true, 
+            level: Level::AlwaysOnTop,
+            decorations: false,
+            platform_specific: PlatformSpecific{skip_taskbar:true,
+                ..Default::default()
+            }, 
+            visible: true,
+            resizable: false,
+            position: Specific(Point::new(x, y)),
+            
+            ..Default::default()
+        },
+        antialiasing: true,
+        ..Default::default()
+    };
+    CalendarApp::run(settings)
 }
 
 impl Application for CalendarApp {
@@ -29,12 +59,12 @@ impl Application for CalendarApp {
     type Flags = ();
 	type Theme = Theme;
     fn new(_flags: ()) -> (Self, Command<Message>) {
+        
         (
             Self {
                 selected_date: Local::now().date_naive(),
                 //buttons: vec![button::State::new(); 42], // 6 weeks * 7 days
                 today: Local::now().date_naive(),
-                
             },
             Command::none(),
         )
@@ -43,6 +73,7 @@ impl Application for CalendarApp {
     fn title(&self) -> String {
         String::from("Calendar")
     }
+
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
@@ -62,22 +93,23 @@ impl Application for CalendarApp {
                 self.selected_date = date;    
                 println!("date:{:?}",date);
 
-            }   
-      
+            }
+            
         }
         Command::none()
     }
-	fn theme(&self)-> Self::Theme{
-		Theme::Nord
-	}
+    
+    fn theme(&self)-> Self::Theme{
+        Theme::Nord
+       // custom_theme::NordTheme::default()
+    }
+
     fn view(&self) -> Element<Message> {
         let month = self.selected_date.format("%B %Y").to_string();
         let days = ["MO", "TU", "WE", "TH", "FR", "SA","SU"];
         let button_size = 25;
        
-        let mut main_content_frame = Column::new()
-            .push(Space::new(Length::Fill,150));
-            
+        let mut main_content_frame = Row::new();
 
         let mut calender_frame = Column::new()
             .push(
@@ -105,31 +137,24 @@ impl Application for CalendarApp {
 
         for _week in 0..6 {
             let mut week_row = Row::new();
-            
+             
             for _day in 0..7 {
-                let date_label = if date == self.today {
-                    Button::new( Text::new(date.day().to_string())
+                
+                let month_date = date.day().to_string();
+                
+                let mut month_button_col:Vec<f32> = vec![0.0;3];
+                if date == self.today {month_button_col[0]= 1.0;} 
+                else if date.month() == self.selected_date.month() {month_button_col = vec![0.0, 0.0, 0.0];} 
+                else {month_button_col = vec![1.0, 1.0,1.0];}
+
+                let date_label = Button::new( Text::new(month_date)
                                     .horizontal_alignment(iced::alignment::Horizontal::Center)
                                     .width(button_size) 
-                                    .style(iced::theme::Text::Color([1.0, 0.0, 0.0].into())))
-                                    .on_press(Message::DateSelected(date))
-                } 
-                else if date.month() == self.selected_date.month() {
-                    Button::new( Text::new(date.day().to_string()) 
-                                    .horizontal_alignment(iced::alignment::Horizontal::Center)
-                                    .width(button_size)
-                                    .style(iced::theme::Text::Color([0.0, 0.0, 0.0].into())))
-                                    .on_press(Message::DateSelected(date))                         
-                } else {
-                    Button::new( Text::new(date.day().to_string())
-                                    .horizontal_alignment(iced::alignment::Horizontal::Center)       
-                                    .width(button_size)
-                                    .style(iced::theme::Text::Color([1.0, 1.0,1.0].into())))
-                                    .on_press(Message::DateSelected(date)) 
-                };
-                
+                                    .style(iced::theme::Text::Color(Color::from_rgb(month_button_col[0],
+                                        month_button_col[1], 
+                                        month_button_col[2]))))
+                                    .on_press(Message::DateSelected(date));
                 week_row = week_row.push(date_label);
-                
                 date = date + chrono::Duration::days(1);
             }
             calender_frame = calender_frame.push(week_row);
@@ -137,38 +162,34 @@ impl Application for CalendarApp {
         let mut calender_row = Row::new().push(calender_frame);
         
         
-        date = first_day_of_month - chrono::Duration::days(weekday as i64);
-        let mut big_week_row = Row::new().align_items(iced::Alignment::End);
 
+        let mut big_week_row = Column::new().align_items(iced::Alignment::End);
         
-        let first_day_of_week:NaiveDate = NaiveDate::from_ymd_opt(self.selected_date.year(), self.selected_date.month(), self.selected_date.day() - self.selected_date.weekday().num_days_from_monday()).unwrap();
         
 
-        println!("{}",first_day_of_week);
+        date = self.selected_date - chrono::Duration::days((self.selected_date.weekday().number_from_monday() - 1) as i64);
+        println!("Monday :{:?}",date);
+    
+        
         for _day in 0..7 {
+            let week_day = date.format("%A").to_string();
+            let week_date =  date.format("%-d, ").to_string() + &week_day[0..3];
+            let mut week_button_col:Vec<f32> = vec![0.0;3];
+           
+            if date == self.today {week_button_col[0]= 1.0;} 
+            else if date.month() == self.selected_date.month() {week_button_col = vec![0.0, 0.0, 0.0];} 
+            else {week_button_col = vec![1.0, 1.0,1.0];}
             
-            let week_label = if date == self.today {
-                Button::new( Text::new(date.day().to_string())
-                                .horizontal_alignment(iced::alignment::Horizontal::Center)
-                                .width(button_size*3) 
-                                .style(iced::theme::Text::Color([1.0, 0.0, 0.0].into())))
-                                .on_press(Message::DateSelected(date))
-            } 
-            else if date.month() == self.selected_date.month() {
-                 Button::new( Text::new(date.day().to_string()) 
-                                .horizontal_alignment(iced::alignment::Horizontal::Center)
-                                .width(button_size*3)
-                                .style(iced::theme::Text::Color([0.0, 0.0, 0.0].into())))
-                                .on_press(Message::DateSelected(date))                         
-            } else {
-                Button::new( Text::new(date.day().to_string())
-                                .horizontal_alignment(iced::alignment::Horizontal::Center)       
-                                .width(button_size*3)
-                                .style(iced::theme::Text::Color([1.0, 1.0,1.0].into())))
-                                .on_press(Message::DateSelected(date)) 
-            };
-                
+            let week_label = Button::new( Text::new(week_date)
+                            .horizontal_alignment(iced::alignment::Horizontal::Center)
+                            .width(button_size*5) 
+                            .style(iced::theme::Text::Color(Color::from_rgb(week_button_col[0],
+                                                                            week_button_col[1], 
+                                                                            week_button_col[2]))))
+                            .on_press(Message::DateSelected(date));
+            
             big_week_row = big_week_row.push(week_label);
+            
              
             date = date + chrono::Duration::days(1);
         }
@@ -179,3 +200,4 @@ impl Application for CalendarApp {
         Container::new(main_content_frame).center_x().center_y().into()
     }
 }
+
