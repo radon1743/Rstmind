@@ -1,0 +1,2 @@
+## Light Weight  
+A standalone GUI application made for windows (for now) for scheduling tasks and taking notes.
