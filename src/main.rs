@@ -5,7 +5,9 @@ use iced::{Element, Application,window, Settings,Theme,Command,Size};
 use iced::widget::{Button, Container, Row,Column, Text};
 use chrono::{Datelike, Local, NaiveDate};
 use iced::window::{Position::Specific,Level,settings::PlatformSpecific};
-
+use iced::keyboard;
+use iced::Subscription;
+use iced::window;
 
 #[derive(Default)]
 struct CalendarApp {
@@ -20,6 +22,7 @@ enum Message {
     PrevMonth,
     NextMonth,
     DateSelected(NaiveDate), 
+    ToggleFullscreen(window::Mode),
 }
 
 
@@ -77,6 +80,10 @@ impl Application for CalendarApp {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::ToggleFullscreen(mode) => {  
+                window::change_mode(window, mode);  
+                return Command::none();
+            }
             Message::PrevMonth => {
                 let (year, month) = (self.selected_date.year(), self.selected_date.month());
                 let new_month = if month == 1 { 12 } else { month - 1 };
@@ -102,6 +109,26 @@ impl Application for CalendarApp {
     fn theme(&self)-> Self::Theme{
         Theme::Nord
        // custom_theme::NordTheme::default()
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        use keyboard::key;
+
+        keyboard::on_key_press(|key, modifiers| {
+            let keyboard::Key::Named(key) = key else {
+                return None;
+            };
+
+            match (key, modifiers) {
+                (key::Named::ArrowUp, keyboard::Modifiers::SHIFT) => {
+                    Some(Message::ToggleFullscreen(window::Mode::Fullscreen))
+                }
+                (key::Named::ArrowDown, keyboard::Modifiers::SHIFT) => {
+                    Some(Message::ToggleFullscreen(window::Mode::Windowed)) 
+                }
+                _ => None,
+            }
+        })
     }
 
     fn view(&self) -> Element<Message> {
