@@ -1,19 +1,19 @@
 //use iced::theme::{Custom, Palette};
 
-use iced::{executor, Color, Point};
-use iced::{Element, Application,window, Settings,Theme,Command,Size};
+use iced::{executor,alignment, Color, Point};
+use iced::{Element, Application,window, Settings,Theme,Command,Size,Length};
 use iced::widget::{Button, Column, Container, Row, Text};
 use chrono::{Datelike, Local, NaiveDate};
 use iced::window::{Position::Specific,Level,settings::PlatformSpecific};
-
 
 #[derive(Default)]
 struct CalendarApp {
     selected_date: NaiveDate,
     //buttons: Vec<button::State>,
     today: NaiveDate,
+    toggle_write: bool,
+    side_button_txt: String,
     }
-
 
 #[derive(Debug, Clone)]
 enum Message {
@@ -22,8 +22,8 @@ enum Message {
     PrevYear,
     NextYear,
     DateSelected(NaiveDate),
+    Slide,
 }
-
 
 
 fn main() -> iced::Result {
@@ -45,7 +45,7 @@ fn main() -> iced::Result {
                 ..Default::default()
             }, 
             visible: true,
-            resizable: false,
+            resizable: true,
             position: Specific(Point::new(x, y)),
             
             ..Default::default()
@@ -54,6 +54,8 @@ fn main() -> iced::Result {
         ..Default::default()
     };
     CalendarApp::run(settings)
+    
+    
 }
 
 impl Application for CalendarApp {
@@ -68,6 +70,9 @@ impl Application for CalendarApp {
                 selected_date: Local::now().date_naive(),
                 //buttons: vec![button::State::new(); 42], // 6 weeks * 7 days
                 today: Local::now().date_naive(),
+                toggle_write:false,
+                side_button_txt:">".to_string(),
+                
             },
             Command::none(),
         )
@@ -105,10 +110,34 @@ impl Application for CalendarApp {
                 self.selected_date = NaiveDate::from_ymd_opt(year, month, 1).expect("err");
             }
             Message::DateSelected(date) => {
+                self.toggle_write = true;
                 self.selected_date = date;    
                 println!("date:{:?}",date);
                 
+                return Command::batch(vec![
+                    window::resize(window::Id::MAIN, Size::new(400.0, 500.0)).into(),
+                    window::move_to(window::Id::MAIN, Point::new(960.0, 480.0-250.0)).into(),
+                ]);
             }
+            Message::Slide => {
+                if self.side_button_txt.clone() == "<" {
+                    self.side_button_txt = ">".to_string();
+                    return Command::batch(vec![
+                            window::resize(window::Id::MAIN, Size::new(400.0, 250.0)).into(),
+                            window::move_to(window::Id::MAIN, Point::new(960.0, 480.0)).into(),
+                        ]);
+                    
+                }
+                else{
+                    self.side_button_txt = "<".to_string();
+                    return Command::batch(vec![
+                            window::resize(window::Id::MAIN, Size::new(400.0, 250.0)).into(),
+                            window::move_to(window::Id::MAIN, Point::new(960.0+380.0, 480.0)).into(),
+                        ]);
+                    
+                } 
+             }
+            
             
         }
         Command::none()
@@ -125,8 +154,16 @@ impl Application for CalendarApp {
         let days = ["MO", "TU", "WE", "TH", "FR", "SA","SU"];
         let button_size = 25;
        
-        let mut main_content_frame = Row::new();
-
+        let mut main_content_frame = Row::new()
+            .push(Button::new( Text::new(self.side_button_txt.clone())
+                
+                .vertical_alignment(alignment::Vertical::Center)
+                .horizontal_alignment(alignment::Horizontal::Center))
+                .on_press(Message::Slide)
+                .height(Length::Fill)
+                .width(button_size)
+                );
+        
         let mut calender_frame = Column::new()
             .push(
                 Row::new().align_items(iced::Alignment::Center)
@@ -219,10 +256,12 @@ impl Application for CalendarApp {
         }
         
         calender_row = calender_row.push(big_week_col);
+        if self.toggle_write{
+            println!("hello new window");      
+        }
         
         
         main_content_frame = main_content_frame.push(calender_row);  
-        
         Container::new(main_content_frame).center_x().center_y().into()
     }
 }
