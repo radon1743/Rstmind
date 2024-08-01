@@ -1,10 +1,13 @@
 //use iced::theme::{Custom, Palette};
 
-use iced::{executor,alignment, Color, Point};
-use iced::{Element, Application,window, Settings,Theme,Command,Size,Length};
+use iced::{executor, Color, Point};
+use iced::{Element, Application,window, Settings,Theme,Command,Size};
 use iced::widget::{Button, Column, Container, Row, Text};
 use chrono::{Datelike, Local, NaiveDate};
 use iced::window::{Position::Specific,Level,settings::PlatformSpecific};
+
+
+
 
 #[derive(Default)]
 struct CalendarApp {
@@ -112,7 +115,7 @@ impl Application for CalendarApp {
             Message::DateSelected(date) => {
                 self.toggle_write = true;
                 self.selected_date = date;    
-                println!("date:{:?}",date);
+                //println!("date:{:?}",date);
                 
                 return Command::batch(vec![
                     window::resize(window::Id::MAIN, Size::new(400.0, 500.0)).into(),
@@ -136,8 +139,7 @@ impl Application for CalendarApp {
                         ]);
                     
                 } 
-             }
-            
+            }
             
         }
         Command::none()
@@ -148,19 +150,17 @@ impl Application for CalendarApp {
        // custom_theme::NordTheme::default()
     }
 
-
+  
+    
     fn view(&self) -> Element<Message> {
         let month = self.selected_date.format("%B %Y").to_string();
         let days = ["MO", "TU", "WE", "TH", "FR", "SA","SU"];
         let button_size = 25;
        
         let mut main_content_frame = Row::new()
-            .push(Button::new( Text::new(self.side_button_txt.clone())
-                
-                .vertical_alignment(alignment::Vertical::Center)
-                .horizontal_alignment(alignment::Horizontal::Center))
+            .push(Button::new( Text::new(self.side_button_txt.clone()))
                 .on_press(Message::Slide)
-                .height(Length::Fill)
+                .height(250.0)
                 .width(button_size)
                 );
         
@@ -199,7 +199,9 @@ impl Application for CalendarApp {
                 if date == self.today {month_button_col[0]= 1.0;} 
                 else if date.month() == self.selected_date.month() {month_button_col = vec![0.0, 0.0, 0.0];} 
                 else {month_button_col = vec![1.0, 1.0,1.0];}
-
+                if date == self.selected_date {month_button_col = vec![0.0, 1.0, 0.0];}
+                
+                
                 let date_label = Button::new( Text::new(month_date)
                                     .horizontal_alignment(iced::alignment::Horizontal::Center)
                                     .width(button_size) 
@@ -230,7 +232,7 @@ impl Application for CalendarApp {
         big_week_col = big_week_col.push(year_frame);
         
         date = self.selected_date - chrono::Duration::days((self.selected_date.weekday().number_from_monday() - 1) as i64);
-        println!("Monday :{:?}",date);
+        //println!("Monday :{:?}",date);
     
         
         for _day in 0..7 {
