@@ -8,7 +8,6 @@ use iced::window::{Position::Specific,Level,settings::PlatformSpecific};
 
 
 
-
 #[derive(Default)]
 struct CalendarApp {
     selected_date: NaiveDate,
@@ -29,17 +28,25 @@ enum Message {
 }
 
 
+static  HEIGHT:f32 = 250.0;
+static  WIDTH:f32 = 425.0;
+
+
 fn main() -> iced::Result {
-    let scale = 1.0;
-    let height = 250.0*scale;
-    let width = 400.0*scale;
     
+    //println!("Screen resolution: {}x{}", width, height);
+    //let (moni_width,moni_height) = get_screen_resolution();
+    
+
     let x =960.0;
-    let y = 480.0;
+    let y = 480.0; 
+
+    
+    
     
     let settings = Settings {           
         window: window::Settings {
-            size: (Size::new(width,height)),
+            size: (Size::new(WIDTH,HEIGHT)),
             exit_on_close_request: false,
             transparent: true, 
             level: Level::AlwaysOnTop,
@@ -75,7 +82,6 @@ impl Application for CalendarApp {
                 today: Local::now().date_naive(),
                 toggle_write:false,
                 side_button_txt:">".to_string(),
-                
             },
             Command::none(),
         )
@@ -139,7 +145,7 @@ impl Application for CalendarApp {
                         ]);
                     
                 } 
-            }
+             }
             
         }
         Command::none()
@@ -155,7 +161,7 @@ impl Application for CalendarApp {
     fn view(&self) -> Element<Message> {
         let month = self.selected_date.format("%B %Y").to_string();
         let days = ["MO", "TU", "WE", "TH", "FR", "SA","SU"];
-        let button_size = 25;
+        let button_size = 30;
        
         let mut main_content_frame = Row::new()
             .push(Button::new( Text::new(self.side_button_txt.clone()))
@@ -168,9 +174,9 @@ impl Application for CalendarApp {
             .push(
                 Row::new().align_items(iced::Alignment::Center)
                     .push(Button::new( Text::new("<")).on_press(Message::PrevMonth))
-                    .push(Text::new(month)
-                    .horizontal_alignment(iced::alignment::Horizontal::Center))
                     
+                    .push(Button::new(Text::new(month)
+                        .horizontal_alignment(iced::alignment::Horizontal::Center)))
                     
                     .push(Button::new( Text::new(">")).on_press(Message::NextMonth)),
             )
@@ -216,7 +222,6 @@ impl Application for CalendarApp {
             calender_frame = calender_frame.push(week_row);
         }
         let mut calender_row = Row::new().push(calender_frame);
-        
         let mut big_week_col = Column::new();
         let year = self.selected_date.format("%Y").to_string();
         let year_frame = Column::new()
@@ -258,12 +263,16 @@ impl Application for CalendarApp {
         }
         
         calender_row = calender_row.push(big_week_col);
+        main_content_frame = main_content_frame.push(calender_row);  
+        
+        
         if self.toggle_write{
+            let note = Row::new()
+                    .push(Button::new( Text::new("<")).on_press(Message::PrevYear));
+            main_content_frame = main_content_frame.push(note);
             println!("hello new window");      
         }
         
-        
-        main_content_frame = main_content_frame.push(calender_row);  
         Container::new(main_content_frame).center_x().center_y().into()
     }
 }
