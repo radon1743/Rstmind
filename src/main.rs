@@ -1,5 +1,5 @@
 //use iced::theme::{Custom, Palette};
-
+//new 2
 use iced::{executor, Color, Point};
 use iced::{Element, Application,window, Settings,Theme,Command,Size};
 use iced::widget::{Button, Column, Container, Row, Text};
@@ -38,10 +38,9 @@ fn main() -> iced::Result {
     //let (moni_width,moni_height) = get_screen_resolution();
     
 
-    let x =960.0;
-    let y = 480.0; 
+    let x = 1366.0 - WIDTH;
+    let y = 768.0 - HEIGHT - 40.0; 
 
-    
     
     
     let settings = Settings {           
@@ -124,7 +123,7 @@ impl Application for CalendarApp {
                 //println!("date:{:?}",date);
                 
                 return Command::batch(vec![
-                    window::resize(window::Id::MAIN, Size::new(400.0, 500.0)).into(),
+                    window::resize(window::Id::MAIN, Size::new(WIDTH, HEIGHT + 250.0)).into(),
                     window::move_to(window::Id::MAIN, Point::new(960.0, 480.0-250.0)).into(),
                 ]);
             }
@@ -132,16 +131,18 @@ impl Application for CalendarApp {
                 if self.side_button_txt.clone() == "<" {
                     self.side_button_txt = ">".to_string();
                     return Command::batch(vec![
-                            window::resize(window::Id::MAIN, Size::new(400.0, 250.0)).into(),
-                            window::move_to(window::Id::MAIN, Point::new(960.0, 480.0)).into(),
+                            window::resize(window::Id::MAIN, Size::new(WIDTH, HEIGHT)).into(),
+                            window::move_to(window::Id::MAIN, 
+                                Point::new(1366.0 - WIDTH, 768.0 - HEIGHT - 40.00)).into(),
                         ]);
                     
                 }
                 else{
                     self.side_button_txt = "<".to_string();
                     return Command::batch(vec![
-                            window::resize(window::Id::MAIN, Size::new(400.0, 250.0)).into(),
-                            window::move_to(window::Id::MAIN, Point::new(960.0+380.0, 480.0)).into(),
+                            window::resize(window::Id::MAIN, Size::new(WIDTH, HEIGHT)).into(),
+                            window::move_to(window::Id::MAIN, 
+                                Point::new(1366.0 - 30.0, 768.0 - HEIGHT - 40.00)).into(),
                         ]);
                     
                 } 
